@@ -22,7 +22,7 @@ Press a shortcut, a semi-transparent 6×6 grid appears in the middle of the scre
 - Restores a maximized window before moving it.
 - A configurable shortcut. The options panel tells you which combinations are already used by Windows or by another program before you pick one.
 - Starts with Windows (enabled on first launch, easy to turn off).
-- Small: a single executable of about 300 KB, written in Rust on top of plain Win32, with no runtime to install.
+- Small: a single executable of under 200 KB, written in Rust on top of plain Win32, with no runtime to install.
 
 ## Installation
 
