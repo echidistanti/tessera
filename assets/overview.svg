@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 340" width="760" height="340" role="img" aria-labelledby="t d">
+<title id="t">Tessera: pick two corners on the grid and the window snaps to that area</title>
+<desc id="d">A six by six grid with a rectangle of cells selected, and a monitor showing a window that fills the matching part of the screen.</desc>
+<rect width="760" height="340" rx="14" fill="#f4f5f7"/>
+<text x="28" y="34" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="15" font-weight="600" fill="#24292f">1. Win+Shift+G: pick two corners</text>
+<rect x="18" y="42" width="269" height="269" rx="12" fill="#181818"/>
+<rect x="31" y="55" width="38" height="38" rx="3" fill="#3a3a3a"/>
+<rect x="72" y="55" width="38" height="38" rx="3" fill="#3a3a3a"/>
+<rect x="113" y="55" width="38" height="38" rx="3" fill="#3a3a3a"/>
+<rect x="154" y="55" width="38" height="38" rx="3" fill="#3a3a3a"/>
+<rect x="195" y="55" width="38" height="38" rx="3" fill="#3a3a3a"/>
+<rect x="236" y="55" width="38" height="38" rx="3" fill="#3a3a3a"/>
+<rect x="31" y="96" width="38" height="38" rx="3" fill="#3a3a3a"/>
+<rect x="72" y="96" width="38" height="38" rx="3" fill="#0078d4"/>
+<rect x="113" y="96" width="38" height="38" rx="3" fill="#0078d4"/>
+<rect x="154" y="96" width="38" height="38" rx="3" fill="#0078d4"/>
+<rect x="195" y="96" width="38" height="38" rx="3" fill="#0078d4"/>
+<rect x="236" y="96" width="38" height="38" rx="3" fill="#3a3a3a"/>
+<rect x="31" y="137" width="38" height="38" rx="3" fill="#3a3a3a"/>
+<rect x="72" y="137" width="38" height="38" rx="3" fill="#0078d4"/>
+<rect x="113" y="137" width="38" height="38" rx="3" fill="#0078d4"/>
+<rect x="154" y="137" width="38" height="38" rx="3" fill="#0078d4"/>
+<rect x="195" y="137" width="38" height="38" rx="3" fill="#0078d4"/>
+<rect x="236" y="137" width="38" height="38" rx="3" fill="#3a3a3a"/>
+<rect x="31" y="178" width="38" height="38" rx="3" fill="#3a3a3a"/>
+<rect x="72" y="178" width="38" height="38" rx="3" fill="#3a3a3a"/>
+<rect x="113" y="178" width="38" height="38" rx="3" fill="#3a3a3a"/>
+<rect x="154" y="178" width="38" height="38" rx="3" fill="#3a3a3a"/>
+<rect x="195" y="178" width="38" height="38" rx="3" fill="#3a3a3a"/>
+<rect x="236" y="178" width="38" height="38" rx="3" fill="#3a3a3a"/>
+<rect x="31" y="219" width="38" height="38" rx="3" fill="#3a3a3a"/>
+<rect x="72" y="219" width="38" height="38" rx="3" fill="#3a3a3a"/>
+<rect x="113" y="219" width="38" height="38" rx="3" fill="#3a3a3a"/>
+<rect x="154" y="219" width="38" height="38" rx="3" fill="#3a3a3a"/>
+<rect x="195" y="219" width="38" height="38" rx="3" fill="#3a3a3a"/>
+<rect x="236" y="219" width="38" height="38" rx="3" fill="#3a3a3a"/>
+<rect x="31" y="260" width="38" height="38" rx="3" fill="#3a3a3a"/>
+<rect x="72" y="260" width="38" height="38" rx="3" fill="#3a3a3a"/>
+<rect x="113" y="260" width="38" height="38" rx="3" fill="#3a3a3a"/>
+<rect x="154" y="260" width="38" height="38" rx="3" fill="#3a3a3a"/>
+<rect x="195" y="260" width="38" height="38" rx="3" fill="#3a3a3a"/>
+<rect x="236" y="260" width="38" height="38" rx="3" fill="#3a3a3a"/>
+<text x="91" y="120" text-anchor="middle" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="16" font-weight="700" fill="#ffffff">A</text>
+<text x="214" y="161" text-anchor="middle" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="16" font-weight="700" fill="#ffffff">B</text>
+<line x1="307" y1="176" x2="377" y2="176" stroke="#57606a" stroke-width="3" stroke-linecap="round"/>
+<polygon points="387,176 373,168 373,184" fill="#57606a"/>
+<text x="427" y="34" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="15" font-weight="600" fill="#24292f">2. The window snaps to that area</text>
+<rect x="427" y="76" width="330" height="185" rx="8" fill="#1f3b5c"/>
+<rect x="427" y="243" width="330" height="18" rx="0" fill="#10253d"/>
+<rect x="484.0" y="105.8" width="216.0" height="51.7" rx="6" fill="#ffffff" stroke="#0078d4" stroke-width="3"/>
+<rect x="484.0" y="105.8" width="216.0" height="16" rx="6" fill="#0078d4"/>
+<rect x="484.0" y="115.8" width="216.0" height="6" fill="#0078d4"/>
+<text x="592.0" y="291" text-anchor="middle" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="13" fill="#57606a">The screen minus the taskbar is divided in 6 × 6 cells</text>
+</svg>
