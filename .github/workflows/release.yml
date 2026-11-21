@@ -64,16 +64,21 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          # The release notes are the section of CHANGELOG.md for this version.
-          awk -v v="${{ steps.version.outputs.number }}" '
-            index($0, "## [" v "]") == 1 { found = 1; next }
-            /^## \[/ { if (found) exit }
-            found { print }
-          ' CHANGELOG.md > notes.md
-          if [ ! -s notes.md ]; then
-            echo "CHANGELOG.md has no section for version ${{ steps.version.outputs.number }}"
-            exit 1
+          if gh release view "${GITHUB_REF_NAME}" > /dev/null 2>&1; then
+            # The release was created first (for instance on the GitHub web page): add the files.
+            gh release upload "${GITHUB_REF_NAME}" out/* --clobber
+          else
+            # The release notes are the section of CHANGELOG.md for this version.
+            awk -v v="${{ steps.version.outputs.number }}" '
+              index($0, "## [" v "]") == 1 { found = 1; next }
+              /^## \[/ { if (found) exit }
+              found { print }
+            ' CHANGELOG.md > notes.md
+            if [ ! -s notes.md ]; then
+              echo "CHANGELOG.md has no section for version ${{ steps.version.outputs.number }}"
+              exit 1
+            fi
+            gh release create "${GITHUB_REF_NAME}" out/* \
+              --title "Tessera ${{ steps.version.outputs.number }}" \
+              --notes-file notes.md
           fi
-          gh release create "${GITHUB_REF_NAME}" out/* \
-            --title "Tessera ${{ steps.version.outputs.number }}" \
-            --notes-file notes.md

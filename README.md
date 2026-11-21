@@ -149,7 +149,7 @@ The result is `dist\Tessera-Setup-0.2.0.exe`.
 
 ### Releases
 
-Pushing a tag such as `v0.2.0` runs the [Release workflow](.github/workflows/release.yml) on GitHub Actions. It builds the executable and the installer, and publishes a release with `tessera.exe`, the installer and `SHA256SUMS.txt`, using the matching section of [CHANGELOG.md](CHANGELOG.md) as the release notes. The tag must match the version in `Cargo.toml`.
+Creating a release for a new tag such as `v0.2.0`, on GitHub or by pushing the tag, runs the [Release workflow](.github/workflows/release.yml) on GitHub Actions. It builds the executable and the installer and attaches `tessera.exe`, the installer and `SHA256SUMS.txt` to the release. If the release does not exist yet, the workflow creates it, using the matching section of [CHANGELOG.md](CHANGELOG.md) as the release notes. The tag must match the version in `Cargo.toml`. *Run workflow* on the Actions page builds everything without publishing, to check the pipeline.
 
 ## Project layout
 
