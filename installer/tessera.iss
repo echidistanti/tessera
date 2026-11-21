@@ -1,7 +1,7 @@
 ; Inno Setup script for Tessera.
 ;
 ; Build it from the repository root, after `cargo build --release`:
-;   ISCC.exe /DAppVersion=0.2.0 installer\tessera.iss
+;   ISCC.exe /DAppVersion=0.3.0 installer\tessera.iss
 ; The installer is written to dist\Tessera-Setup-<version>.exe.
 
 #ifndef AppVersion

@@ -1,6 +1,6 @@
 name: Release
 
-# Pushing a tag such as v0.2.0 builds the executable and the installer and publishes a release.
+# Pushing a tag such as v0.3.0 builds the executable and the installer and publishes a release.
 # "Run workflow" builds them without publishing, to check that the pipeline works.
 on:
   push:

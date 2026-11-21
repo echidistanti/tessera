@@ -1,6 +1,6 @@
 [package]
 name = "tessera"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2021"
 description = "Minimal grid-based window placement for Windows, inspired by gTile"
 license = "MIT"

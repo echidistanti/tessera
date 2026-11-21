@@ -144,14 +144,14 @@ The shortcut logic (key names, the list of documented Windows shortcuts, the wor
 The installer is an [Inno Setup](https://jrsoftware.org/isinfo.php) script. After building the release executable, from the repository root:
 
 ```powershell
-ISCC.exe /DAppVersion=0.2.0 installer\tessera.iss
+ISCC.exe /DAppVersion=0.3.0 installer\tessera.iss
 ```
 
-The result is `dist\Tessera-Setup-0.2.0.exe`.
+The result is `dist\Tessera-Setup-0.3.0.exe`.
 
 ### Releases
 
-Creating a release for a new tag such as `v0.2.0`, on GitHub or by pushing the tag, runs the [Release workflow](.github/workflows/release.yml) on GitHub Actions. It builds the executable and the installer and attaches `tessera.exe`, the installer and `SHA256SUMS.txt` to the release. If the release does not exist yet, the workflow creates it, using the matching section of [CHANGELOG.md](CHANGELOG.md) as the release notes. The tag must match the version in `Cargo.toml`. *Run workflow* on the Actions page builds everything without publishing, to check the pipeline.
+Creating a release for a new tag such as `v0.3.0`, on GitHub or by pushing the tag, runs the [Release workflow](.github/workflows/release.yml) on GitHub Actions. It builds the executable and the installer and attaches `tessera.exe`, the installer and `SHA256SUMS.txt` to the release. If the release does not exist yet, the workflow creates it, using the matching section of [CHANGELOG.md](CHANGELOG.md) as the release notes. The tag must match the version in `Cargo.toml`. *Run workflow* on the Actions page builds everything without publishing, to check the pipeline.
 
 ## Project layout
 
