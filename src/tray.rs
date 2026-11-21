@@ -1,4 +1,4 @@
-//! Notification-area icon, balloon notifications and the two-item menu.
+//! Notification-area icon, balloon notifications and the left-click menu.
 
 use windows::core::w;
 use windows::Win32::Foundation::{HWND, LPARAM, POINT, WPARAM};
@@ -17,6 +17,7 @@ use crate::util::copy_wide;
 pub const WM_TRAY: u32 = WM_APP + 1;
 pub const CMD_AUTOSTART: u32 = 100;
 pub const CMD_EXIT: u32 = 101;
+pub const CMD_OPTIONS: u32 = 102;
 const TRAY_ID: u32 = 1;
 
 fn base(hwnd: HWND) -> NOTIFYICONDATAW {
@@ -54,11 +55,23 @@ pub fn notify(hwnd: HWND, text: &str, warning: bool) {
     tlog!("notification shown ({ok}): {text}");
 }
 
+/// Updates the tooltip of the existing icon.
+pub fn set_tip(hwnd: HWND, tip: &str) {
+    let mut nid = base(hwnd);
+    nid.uFlags = NIF_TIP;
+    copy_wide(&mut nid.szTip, tip);
+    unsafe {
+        let _ = Shell_NotifyIconW(NIM_MODIFY, &nid);
+    }
+}
+
 /// Shows the menu at the cursor and returns the chosen command (0 if dismissed).
 pub fn show_menu(hwnd: HWND, autostart: bool) -> u32 {
     unsafe {
         let Ok(menu) = CreatePopupMenu() else { return 0 };
         let check = if autostart { MF_CHECKED } else { MF_UNCHECKED };
+        let _ = AppendMenuW(menu, MF_STRING, CMD_OPTIONS as usize, w!("Options…"));
+        let _ = AppendMenuW(menu, MF_SEPARATOR, 0, None);
         let _ = AppendMenuW(menu, MF_STRING | check, CMD_AUTOSTART as usize, w!("Start with Windows"));
         let _ = AppendMenuW(menu, MF_SEPARATOR, 0, None);
         let _ = AppendMenuW(menu, MF_STRING, CMD_EXIT as usize, w!("Exit"));

@@ -235,7 +235,10 @@ pub fn toggle(main_hwnd: HWND) {
 fn open(main_hwnd: HWND) {
     let me = get();
     let foreground = unsafe { GetForegroundWindow() };
-    let target = match placement::inspect(foreground, &[me.hwnd, main_hwnd]) {
+    // Tessera's own windows are never a target, the options panel included.
+    let mut own = vec![me.hwnd, main_hwnd];
+    own.extend(crate::options::hwnd());
+    let target = match placement::inspect(foreground, &own) {
         Ok(t) => t,
         Err(reason) => {
             tlog!("grid not opened: {reason}");

@@ -1,1 +1,3 @@
+#define RT_MANIFEST 24
 1 ICON "tessera.ico"
+1 RT_MANIFEST "tessera.manifest"

@@ -1,42 +1,36 @@
-//! Global hotkey: Win+Shift+G, falling back to Win+Ctrl+Alt+G.
+//! The global hotkey that opens the grid, and the test used to tell whether a combination is
+//! free.
 
 use windows::Win32::Foundation::HWND;
 use windows::Win32::UI::Input::KeyboardAndMouse::{
-    RegisterHotKey, UnregisterHotKey, HOT_KEY_MODIFIERS, MOD_ALT, MOD_CONTROL, MOD_NOREPEAT,
-    MOD_SHIFT, MOD_WIN,
+    RegisterHotKey, UnregisterHotKey, HOT_KEY_MODIFIERS, MOD_NOREPEAT,
 };
+
+use crate::combo::{Availability, Combo};
 
 pub const HOTKEY_ID: i32 = 1;
+/// Used only to ask Windows whether a combination can be registered; released at once.
+const PROBE_ID: i32 = 2;
 
-pub struct Combo {
-    pub modifiers: HOT_KEY_MODIFIERS,
-    pub key: u32,
-    pub label: &'static str,
+fn modifiers(combo: Combo) -> HOT_KEY_MODIFIERS {
+    // Combo uses the same bit values as the MOD_* flags.
+    HOT_KEY_MODIFIERS(combo.modifiers | MOD_NOREPEAT.0)
 }
 
-/// Preferred combination. Kept as constants so it can be exposed in a settings menu later.
-pub const PRIMARY: Combo = Combo {
-    modifiers: HOT_KEY_MODIFIERS(MOD_WIN.0 | MOD_SHIFT.0),
-    key: b'G' as u32,
-    label: "Win+Shift+G",
-};
+/// Registers `combo` as the hotkey that opens the grid.
+pub fn register(hwnd: HWND, combo: Combo) -> windows::core::Result<()> {
+    unsafe { RegisterHotKey(Some(hwnd), HOTKEY_ID, modifiers(combo), combo.key) }
+}
 
-pub const FALLBACK: Combo = Combo {
-    modifiers: HOT_KEY_MODIFIERS(MOD_WIN.0 | MOD_CONTROL.0 | MOD_ALT.0),
-    key: b'G' as u32,
-    label: "Win+Ctrl+Alt+G",
-};
-
-/// Tries the primary combination, then the fallback. Returns the one that worked.
-pub fn register(hwnd: HWND) -> Option<&'static Combo> {
-    for combo in [&PRIMARY, &FALLBACK] {
-        let modifiers = HOT_KEY_MODIFIERS(combo.modifiers.0 | MOD_NOREPEAT.0);
-        match unsafe { RegisterHotKey(Some(hwnd), HOTKEY_ID, modifiers, combo.key) } {
+/// Registers the first combination of `candidates` that Windows accepts and returns it.
+pub fn register_first(hwnd: HWND, candidates: &[Combo]) -> Option<Combo> {
+    for &combo in candidates {
+        match register(hwnd, combo) {
             Ok(()) => {
-                tlog!("hotkey registered: {}", combo.label);
+                tlog!("hotkey registered: {}", combo.label());
                 return Some(combo);
             }
-            Err(e) => tlog!("hotkey {} rejected by Windows: {}", combo.label, e),
+            Err(e) => tlog!("hotkey {} rejected by Windows: {}", combo.label(), e),
         }
     }
     None
@@ -45,5 +39,23 @@ pub fn register(hwnd: HWND) -> Option<&'static Combo> {
 pub fn unregister(hwnd: HWND) {
     unsafe {
         let _ = UnregisterHotKey(Some(hwnd), HOTKEY_ID);
+    }
+}
+
+/// Asks Windows whether `combo` could be registered right now. The only way to know is to try:
+/// the registration is released immediately, so nothing is left behind. `active` is the
+/// combination Tessera itself holds, which would otherwise always look taken.
+pub fn probe(hwnd: HWND, active: Option<Combo>, combo: Combo) -> Availability {
+    if active == Some(combo) {
+        return Availability::Active;
+    }
+    unsafe {
+        match RegisterHotKey(Some(hwnd), PROBE_ID, modifiers(combo), combo.key) {
+            Ok(()) => {
+                let _ = UnregisterHotKey(Some(hwnd), PROBE_ID);
+                Availability::Free
+            }
+            Err(_) => Availability::Taken,
+        }
     }
 }
