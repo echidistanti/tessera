@@ -32,7 +32,7 @@ use windows::Win32::UI::WindowsAndMessaging::{
     WM_PAINT, WM_RBUTTONUP, WNDCLASSW, WS_EX_LAYERED, WS_EX_TOOLWINDOW, WS_EX_TOPMOST, WS_POPUP,
 };
 
-use crate::placement::{self, cell_at, grid_line, COLS, ROWS};
+use crate::placement::{self, cell_at, cols, grid_line, rows};
 use crate::util::{beep, rect_str};
 
 // Look and feel. Sizes are in pixels at 100% scaling and are multiplied by the monitor scale.
@@ -123,8 +123,8 @@ impl Layout {
         Layout {
             x: m,
             y: m,
-            w: (client_w - 2 * m).max(COLS),
-            h: (client_h - 2 * m).max(ROWS),
+            w: (client_w - 2 * m).max(cols()),
+            h: (client_h - 2 * m).max(rows()),
             gap: ((GAP * scale).round() as i32).max(1),
         }
     }
@@ -134,10 +134,10 @@ impl Layout {
         let a = self.gap / 2;
         let b = self.gap - a;
         RECT {
-            left: grid_line(self.x, self.w, c, COLS) + a,
-            top: grid_line(self.y, self.h, r, ROWS) + a,
-            right: grid_line(self.x, self.w, c + 1, COLS) - b,
-            bottom: grid_line(self.y, self.h, r + 1, ROWS) - b,
+            left: grid_line(self.x, self.w, c, cols()) + a,
+            top: grid_line(self.y, self.h, r, rows()) + a,
+            right: grid_line(self.x, self.w, c + 1, cols()) - b,
+            bottom: grid_line(self.y, self.h, r + 1, rows()) - b,
         }
     }
 
@@ -146,11 +146,11 @@ impl Layout {
         if !inside && !clamp {
             return None;
         }
-        let c = ((px - self.x) as i64 * COLS as i64).div_euclid(self.w as i64) as i32;
-        let r = ((py - self.y) as i64 * ROWS as i64).div_euclid(self.h as i64) as i32;
+        let c = ((px - self.x) as i64 * cols() as i64).div_euclid(self.w as i64) as i32;
+        let r = ((py - self.y) as i64 * rows() as i64).div_euclid(self.h as i64) as i32;
         Some(Pos {
-            c: c.clamp(0, COLS - 1),
-            r: r.clamp(0, ROWS - 1),
+            c: c.clamp(0, cols() - 1),
+            r: r.clamp(0, rows() - 1),
         })
     }
 }
@@ -368,8 +368,8 @@ fn on_key(vk: VIRTUAL_KEY, repeat: bool) {
         return;
     }
     let step = |p: Pos, dc: i32, dr: i32| Pos {
-        c: (p.c + dc).clamp(0, COLS - 1),
-        r: (p.r + dr).clamp(0, ROWS - 1),
+        c: (p.c + dc).clamp(0, cols() - 1),
+        r: (p.r + dr).clamp(0, rows() - 1),
     };
     match vk {
         VK_LEFT | VK_RIGHT | VK_UP | VK_DOWN => {
@@ -498,8 +498,8 @@ fn paint(hwnd: HWND) {
 
         fill(mem, &rc, BACKGROUND);
         let lay = Layout::new(w, h, s.scale);
-        for r in 0..ROWS {
-            for c in 0..COLS {
+        for r in 0..rows() {
+            for c in 0..cols() {
                 fill(mem, &lay.tile(c, r), TILE);
             }
         }

@@ -2,6 +2,16 @@
 
 All notable changes to Tessera are listed here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+
+- Grid size presets: 3×3, 4×4, 6×6 (the default) and 8×8, chosen in the options panel and remembered between runs.
+
+### Changed
+
+- *Use default* in the options panel is now *Use defaults* and also goes back to the 6×6 grid.
+
 ## [0.2.0] - 2026-11-21
 
 ### Added

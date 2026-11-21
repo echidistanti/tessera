@@ -9,10 +9,12 @@ use windows::Win32::System::Registry::{
 };
 
 use crate::combo::Combo;
+use crate::grid;
 
 pub const APP_KEY: PCWSTR = w!("Software\\Tessera");
 const HOTKEY_MODIFIERS: PCWSTR = w!("HotkeyModifiers");
 const HOTKEY_KEY: PCWSTR = w!("HotkeyKey");
+const GRID_SIZE: PCWSTR = w!("GridSize");
 
 pub fn get_dword(name: PCWSTR) -> Option<u32> {
     let mut value = 0u32;
@@ -62,4 +64,21 @@ pub fn load_combo() -> Option<Combo> {
 pub fn save_combo(combo: Combo) {
     let ok = set_dword(HOTKEY_MODIFIERS, combo.modifiers) && set_dword(HOTKEY_KEY, combo.key);
     tlog!("shortcut {} saved: {ok}", combo.label());
+}
+
+/// The grid size the user chose, or the default.
+pub fn load_grid_size() -> i32 {
+    match get_dword(GRID_SIZE).and_then(|v| i32::try_from(v).ok()) {
+        Some(size) if grid::is_valid(size) => size,
+        Some(size) => {
+            tlog!("ignoring an invalid saved grid size ({size})");
+            grid::DEFAULT
+        }
+        None => grid::DEFAULT,
+    }
+}
+
+pub fn save_grid_size(size: i32) {
+    let ok = set_dword(GRID_SIZE, size as u32);
+    tlog!("grid size {} saved: {ok}", grid::label(size));
 }

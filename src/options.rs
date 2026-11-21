@@ -1,5 +1,6 @@
 //! The options panel opened by a right click on the tray icon: choose the shortcut that opens
-//! the grid (with every key marked free or taken) and toggle "Start with Windows".
+//! the grid (with every key marked free or taken), the grid size, and toggle "Start with
+//! Windows".
 //!
 //! Like the rest of Tessera it is plain Win32 on the single UI thread. State lives in
 //! `thread_local` cells that are read and written without calling Win32 in between.
@@ -28,18 +29,19 @@ use windows::Win32::UI::Input::KeyboardAndMouse::EnableWindow;
 use windows::Win32::UI::WindowsAndMessaging::{
     CreateWindowExW, DefWindowProcW, DestroyWindow, GetCursorPos, IsDialogMessageW, LoadCursorW,
     MoveWindow, RegisterClassW, SendMessageW, SetForegroundWindow, SetWindowPos, SetWindowTextW,
-    ShowWindow, BM_GETCHECK, BM_SETCHECK, BN_CLICKED, BS_AUTOCHECKBOX, BS_DEFPUSHBUTTON,
-    BS_PUSHBUTTON, CBN_SELCHANGE, CBS_DROPDOWNLIST, CBS_HASSTRINGS, CBS_OWNERDRAWFIXED,
+    ShowWindow, BM_GETCHECK, BM_SETCHECK, BN_CLICKED, BS_AUTOCHECKBOX, BS_AUTORADIOBUTTON,
+    BS_DEFPUSHBUTTON, BS_PUSHBUTTON, CBN_SELCHANGE, CBS_DROPDOWNLIST, CBS_HASSTRINGS, CBS_OWNERDRAWFIXED,
     CB_ADDSTRING, CB_GETCURSEL, CB_RESETCONTENT, CB_SETCURSEL, HMENU, IDCANCEL, IDC_ARROW,
     IDOK, MSG, NONCLIENTMETRICSW, SPI_GETNONCLIENTMETRICS, SWP_NOACTIVATE, SWP_NOZORDER, SW_SHOW, WINDOW_EX_STYLE, WINDOW_STYLE, WM_CLOSE,
     WM_COMMAND, WM_CREATE, WM_CTLCOLORSTATIC, WM_DESTROY, WM_DPICHANGED, WM_DRAWITEM,
     WM_MEASUREITEM, WM_SETFONT, WNDCLASSW, WS_CAPTION, WS_CHILD, WS_EX_TOOLWINDOW, WS_EX_TOPMOST,
-    WS_POPUP, WS_SYSMENU, WS_TABSTOP, WS_VISIBLE, WS_VSCROLL,
+    WS_GROUP, WS_POPUP, WS_SYSMENU, WS_TABSTOP, WS_VISIBLE, WS_VSCROLL,
 };
 
 use crate::combo::{
     self, Availability, Combo, Tone, ALT, CONTROL, SHIFT, WIN,
 };
+use crate::grid;
 use crate::hotkey;
 
 const ID_WIN: i32 = 201;
@@ -50,12 +52,14 @@ const ID_KEY: i32 = 205;
 const ID_STATUS: i32 = 206;
 const ID_AUTOSTART: i32 = 207;
 const ID_RESET: i32 = 208;
+/// The grid size radio buttons use consecutive ids, in the order of `grid::PRESETS`.
+const ID_GRID_FIRST: i32 = 220;
 const DM_GETDEFID: u32 = 0x0400; // WM_USER
 const SS_LEFT: u32 = 0; // left-aligned static text
 
 // Layout in pixels at 100% scaling (96 dpi); everything is multiplied by the window's scale.
 const CLIENT_W: i32 = 360;
-const CLIENT_H: i32 = 232;
+const CLIENT_H: i32 = 294;
 const ITEM_H: i32 = 20;
 
 const RED: COLORREF = rgb(0xb4, 0x1e, 0x1e);
@@ -79,6 +83,8 @@ struct Panel {
     shift: HWND,
     key: HWND,
     status: HWND,
+    grid_label: HWND,
+    grids: [HWND; 4],
     autostart: HWND,
     reset: HWND,
     save: HWND,
@@ -100,11 +106,14 @@ struct Item {
 struct Start {
     active: Option<Combo>,
     autostart: bool,
+    grid: i32,
 }
 
 thread_local! {
     static PANEL: Cell<Option<Panel>> = const { Cell::new(None) };
-    static START: Cell<Start> = const { Cell::new(Start { active: None, autostart: false }) };
+    static START: Cell<Start> = const {
+        Cell::new(Start { active: None, autostart: false, grid: grid::DEFAULT })
+    };
     static KEYS: RefCell<Vec<(String, u32)>> = const { RefCell::new(Vec::new()) };
     static ITEMS: RefCell<Vec<Item>> = const { RefCell::new(Vec::new()) };
     /// Modifiers the drop-down was last probed for (`u32::MAX`: not built yet).
@@ -151,14 +160,14 @@ pub fn handle_message(msg: &MSG) -> bool {
 }
 
 /// Opens the panel near the cursor, or brings it to the front if it is already open.
-pub fn show(main: HWND, active: Option<Combo>, autostart: bool) {
+pub fn show(main: HWND, active: Option<Combo>, autostart: bool, grid: i32) {
     if let Some(p) = PANEL.with(|p| p.get()) {
         unsafe {
             let _ = SetForegroundWindow(p.hwnd);
         }
         return;
     }
-    START.with(|s| s.set(Start { active, autostart }));
+    START.with(|s| s.set(Start { active, autostart, grid }));
     LIST_MODS.with(|m| m.set(u32::MAX));
     KEYS.with(|k| *k.borrow_mut() = combo::key_list());
 
@@ -295,10 +304,14 @@ fn layout(panel: &mut Panel, dpi: u32) {
         // The height of a drop-down is its height when open.
         place(panel.key, 54, 68, 150, 24 + 9 * ITEM_H + 4);
         place(panel.status, 16, 104, 328, 50);
-        place(panel.autostart, 16, 160, 328, 22);
-        place(panel.reset, 16, 196, 96, 26);
-        place(panel.save, 196, 196, 72, 26);
-        place(panel.cancel, 272, 196, 72, 26);
+        place(panel.grid_label, 16, 164, 328, 18);
+        for (i, radio) in panel.grids.iter().enumerate() {
+            place(*radio, 16 + 72 * i as i32, 186, 68, 22);
+        }
+        place(panel.autostart, 16, 222, 328, 22);
+        place(panel.reset, 16, 258, 96, 26);
+        place(panel.save, 196, 258, 72, 26);
+        place(panel.cancel, 272, 258, 72, 26);
     }
 }
 
@@ -326,6 +339,38 @@ fn chosen_combo(p: &Panel) -> Combo {
         .and_then(|i| KEYS.with(|k| k.borrow().get(i).map(|(_, vk)| *vk)))
         .unwrap_or(0);
     Combo { modifiers: chosen_modifiers(p), key }
+}
+
+fn set_grid(p: &Panel, size: i32) {
+    for (radio, preset) in p.grids.iter().zip(grid::PRESETS) {
+        set_checked(*radio, preset == size);
+    }
+}
+
+fn chosen_grid(p: &Panel) -> i32 {
+    p.grids
+        .iter()
+        .zip(grid::PRESETS)
+        .find(|(radio, _)| is_checked(**radio))
+        .map_or(grid::DEFAULT, |(_, preset)| preset)
+}
+
+/// One radio button per grid size; the first starts the group.
+fn make_grid_radios(parent: HWND, instance: HINSTANCE) -> [HWND; 4] {
+    let mut radios = [HWND::default(); 4];
+    for (i, (slot, size)) in radios.iter_mut().zip(grid::PRESETS).enumerate() {
+        let text = wide_z(&grid::label(size));
+        let first = if i == 0 { WS_GROUP.0 | WS_TABSTOP.0 } else { 0 };
+        *slot = make(
+            parent,
+            instance,
+            w!("BUTTON"),
+            PCWSTR(text.as_ptr()),
+            BS_AUTORADIOBUTTON as u32 | first,
+            ID_GRID_FIRST + i as i32,
+        );
+    }
+    radios
 }
 
 /// Probes every key for the chosen modifiers and rebuilds the drop-down with the result.
@@ -426,8 +471,11 @@ fn on_create(hwnd: HWND, main: HWND) {
             ID_KEY,
         ),
         status: make(hwnd, instance, w!("STATIC"), w!(""), SS_LEFT, ID_STATUS),
-        autostart: button(w!("Start with Windows"), check, ID_AUTOSTART),
-        reset: button(w!("Use default"), BS_PUSHBUTTON as u32, ID_RESET),
+        grid_label: make(hwnd, instance, w!("STATIC"), w!("Grid size"), SS_LEFT, 0),
+        grids: make_grid_radios(hwnd, instance),
+        // WS_GROUP ends the group of radio buttons before it.
+        autostart: button(w!("Start with Windows"), check | WS_GROUP.0, ID_AUTOSTART),
+        reset: button(w!("Use defaults"), BS_PUSHBUTTON as u32, ID_RESET),
         save: button(w!("Save"), BS_DEFPUSHBUTTON as u32, IDOK.0),
         cancel: button(w!("Cancel"), BS_PUSHBUTTON as u32, IDCANCEL.0),
         font: HFONT::default(),
@@ -437,6 +485,7 @@ fn on_create(hwnd: HWND, main: HWND) {
     PANEL.with(|p| p.set(Some(panel)));
 
     set_checked(panel.autostart, start.autostart);
+    set_grid(&panel, start.grid);
     select_combo(&panel, start.active.unwrap_or(Combo::DEFAULT));
     refresh();
 }
@@ -451,11 +500,12 @@ fn on_save() {
         return;
     }
     let autostart = is_checked(p.autostart);
+    let grid_size = chosen_grid(&p);
     // Close first, so the panel is gone when the confirmation balloon appears.
     unsafe {
         let _ = DestroyWindow(p.hwnd);
     }
-    crate::apply_settings(p.main, combo, autostart);
+    crate::apply_settings(p.main, combo, autostart, grid_size);
 }
 
 fn on_draw_item(item: &DRAWITEMSTRUCT) {
@@ -517,6 +567,7 @@ extern "system" fn proc(hwnd: HWND, msg: u32, wp: WPARAM, lp: LPARAM) -> LRESULT
                 ID_RESET if code == BN_CLICKED => {
                     if let Some(p) = PANEL.with(|p| p.get()) {
                         select_combo(&p, Combo::DEFAULT);
+                        set_grid(&p, grid::DEFAULT);
                         refresh();
                     }
                 }

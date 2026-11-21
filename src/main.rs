@@ -7,6 +7,7 @@
 mod log;
 mod autostart;
 mod combo;
+mod grid;
 mod hotkey;
 mod options;
 mod overlay;
@@ -131,13 +132,23 @@ fn on_tray_menu(hwnd: HWND) {
 
 /// Right click: the options panel.
 fn on_tray_options(hwnd: HWND) {
-    options::show(hwnd, COMBO.with(|c| c.get()), autostart::is_enabled());
+    options::show(
+        hwnd,
+        COMBO.with(|c| c.get()),
+        autostart::is_enabled(),
+        placement::grid_size(),
+    );
 }
 
-/// Applies what the options panel saved: "Start with Windows" and the grid shortcut.
-fn apply_settings(hwnd: HWND, wanted: Combo, start_with_windows: bool) {
+/// Applies what the options panel saved: the grid size, "Start with Windows" and the shortcut.
+fn apply_settings(hwnd: HWND, wanted: Combo, start_with_windows: bool, grid_size: i32) {
     if autostart::is_enabled() != start_with_windows {
         autostart::set_enabled(start_with_windows);
+    }
+    if grid_size != placement::grid_size() && grid::is_valid(grid_size) {
+        placement::set_grid_size(grid_size);
+        settings::save_grid_size(grid_size);
+        tlog!("grid size changed to {}", grid::label(grid_size));
     }
     change_hotkey(hwnd, wanted);
 }
@@ -302,7 +313,8 @@ fn main() {
     }
     let dpi = unsafe { SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2) };
     tlog!("per-monitor v2 DPI awareness: {}", if dpi.is_ok() { "on" } else { "failed" });
-    tlog!("grid {}x{}", placement::COLS, placement::ROWS);
+    placement::set_grid_size(settings::load_grid_size());
+    tlog!("grid {}", grid::label(placement::grid_size()));
 
     if let Err(e) = run() {
         tlog!("fatal: {e}");

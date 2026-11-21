@@ -6,7 +6,7 @@
 
 A minimal grid window placer for Windows 10 and 11, inspired by [gTile](https://github.com/gTile/gTile).
 
-Press a shortcut, a semi-transparent 6×6 grid appears in the middle of the screen, pick two corners, and the focused window snaps to that part of the monitor. Tessera is a single small executable that lives in the notification area. It has no windows of its own besides the grid and a small options panel, no configuration files, and no background services.
+Press a shortcut, a semi-transparent grid (6×6 by default) appears in the middle of the screen, pick two corners, and the focused window snaps to that part of the monitor. Tessera is a single small executable that lives in the notification area. It has no windows of its own besides the grid and a small options panel, no configuration files, and no background services.
 
 <p align="center">
   <img src="assets/overview.svg" alt="Pick two corners on the grid and the window snaps to the matching area of the screen" width="760">
@@ -14,7 +14,7 @@ Press a shortcut, a semi-transparent 6×6 grid appears in the middle of the scre
 
 ## Features
 
-- A fixed 6×6 grid, drawn on the monitor that holds the focused window.
+- A 6×6 grid by default, or 3×3, 4×4 or 8×8, drawn on the monitor that holds the focused window.
 - Mouse or keyboard selection: hover, click, drag, or use the arrow keys and Space.
 - Snaps to the monitor's work area (the screen minus the taskbar), so windows never slide under it.
 - Works on multi-monitor setups and with per-monitor DPI scaling.
@@ -62,15 +62,16 @@ The grid closes after applying, when it loses focus, or when you press the short
 | Left click | A small menu: **Options…**, **Start with Windows**, **Exit** |
 | Right click | The options panel |
 
-### Choosing another shortcut
+### Choosing another shortcut or grid size
 
 Right-click the tray icon to open the options panel.
 
 - Tick any combination of **Win**, **Ctrl**, **Alt** and **Shift**, then pick a key from the list: letters, digits, F1 to F12, Space, Page Up, Page Down, Home, End, Insert and Delete. At least one modifier is required.
 - Every key in the list is checked against the modifiers you ticked and marked in colour: normal when the combination is free, red when it is taken, amber when it is free right now but documented as a Windows shortcut. Taken combinations carry a note such as *(used by Windows)*.
 - Below the list, a sentence says what applies to your choice, for example *Win+Shift+S is already used by Windows for Snipping Tool.*
-- **Save** is disabled while the chosen combination is taken, so you cannot pick one that would not work. **Use default** goes back to Win+Shift+G.
-- **Start with Windows** is applied together with the shortcut when you press Save.
+- **Save** is disabled while the chosen combination is taken, so you cannot pick one that would not work. **Use defaults** goes back to Win+Shift+G and a 6 × 6 grid.
+- **Grid size** offers 3 × 3, 4 × 4, 6 × 6 (the default) and 8 × 8. A coarser grid has fewer, larger cells; a finer one places windows more precisely.
+- **Start with Windows** is applied together with the shortcut and the grid size when you press Save.
 
 The new shortcut takes effect immediately and is remembered between runs. If it cannot be registered the next time Tessera starts (another program took it in the meantime), Tessera falls back to Win+Shift+G, then to Win+Ctrl+Alt+G, and says so in a notification. Your choice is kept, and works again as soon as the combination is free.
 
@@ -95,6 +96,7 @@ Two limits follow from this.
 | --- | --- |
 | Log, rewritten at every start | `%LOCALAPPDATA%\Tessera\tessera.log` |
 | Chosen shortcut | `HKEY_CURRENT_USER\Software\Tessera` (`HotkeyModifiers`, `HotkeyKey`) |
+| Grid size | `HKEY_CURRENT_USER\Software\Tessera` (`GridSize`) |
 | First-run flag | `HKEY_CURRENT_USER\Software\Tessera` (`Initialized`) |
 | Start with Windows | `HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Run` (`Tessera`) |
 
@@ -135,7 +137,7 @@ cargo clippy --release -- -D warnings
 cargo test --release
 ```
 
-The shortcut logic (key names, the list of documented Windows shortcuts, the wording of the status line) lives in `src/combo.rs`, which has no Win32 dependency. On any platform you can test it on its own with `rustc --test src/combo.rs -o combo_test && ./combo_test`.
+The shortcut logic (key names, the list of documented Windows shortcuts, the wording of the status line) lives in `src/combo.rs` and the grid presets in `src/grid.rs`. Neither has a Win32 dependency, so on any platform you can test them on their own, for example with `rustc --test src/combo.rs -o combo_test && ./combo_test`.
 
 ### Building the installer
 
@@ -158,10 +160,11 @@ Creating a release for a new tag such as `v0.2.0`, on GitHub or by pushing the t
 | `src/main.rs` | Startup, single instance, hidden window, message loop, applying the settings |
 | `src/hotkey.rs` | Global hotkey registration and the availability test |
 | `src/combo.rs` | Shortcut model: keys, labels, documented Windows shortcuts, status wording |
+| `src/grid.rs` | Grid size presets |
 | `src/options.rs` | The options panel |
-| `src/settings.rs` | Saved settings in the registry |
+| `src/settings.rs` | Saved settings in the registry (shortcut, grid size) |
 | `src/overlay.rs` | The grid window: drawing, mouse and keyboard selection |
-| `src/placement.rs` | Target validation, grid geometry, moving the window |
+| `src/placement.rs` | Target validation, grid size and geometry, moving the window |
 | `src/tray.rs` | Tray icon, notifications, left-click menu |
 | `src/autostart.rs` | Start with Windows (the `Run` key) |
 | `src/log.rs`, `src/util.rs` | Logging and helpers |

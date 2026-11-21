@@ -50,5 +50,5 @@
 <rect x="484.0" y="105.8" width="216.0" height="51.7" rx="6" fill="#ffffff" stroke="#0078d4" stroke-width="3"/>
 <rect x="484.0" y="105.8" width="216.0" height="16" rx="6" fill="#0078d4"/>
 <rect x="484.0" y="115.8" width="216.0" height="6" fill="#0078d4"/>
-<text x="592.0" y="291" text-anchor="middle" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="13" fill="#57606a">The screen minus the taskbar is divided in 6 × 6 cells</text>
+<text x="592.0" y="291" text-anchor="middle" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="13" fill="#57606a">The screen minus the taskbar is divided into cells (6 × 6 by default)</text>
 </svg>

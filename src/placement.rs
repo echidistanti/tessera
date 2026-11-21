@@ -1,6 +1,7 @@
 //! Everything about the target window: validation, geometry and the actual move.
 
 use std::ffi::c_void;
+use std::sync::atomic::{AtomicI32, Ordering};
 
 use windows::Win32::Foundation::{CloseHandle, HANDLE, HWND, RECT};
 use windows::Win32::Graphics::Dwm::{DwmGetWindowAttribute, DWMWA_EXTENDED_FRAME_BOUNDS};
@@ -18,11 +19,31 @@ use windows::Win32::UI::WindowsAndMessaging::{
     SWP_NOOWNERZORDER, SWP_NOZORDER, SW_RESTORE,
 };
 
+use crate::grid;
 use crate::util::{beep, class_name, rect_str, window_title};
 
-/// Grid size. Fixed for now; kept here so it can become a setting later.
-pub const COLS: i32 = 6;
-pub const ROWS: i32 = 6;
+/// Grid size: set from the saved settings at startup and from the options panel.
+static GRID_SIZE: AtomicI32 = AtomicI32::new(grid::DEFAULT);
+
+/// Columns of the grid. The grid is square, but columns and rows are kept apart in the maths.
+pub fn cols() -> i32 {
+    GRID_SIZE.load(Ordering::Relaxed)
+}
+
+pub fn rows() -> i32 {
+    GRID_SIZE.load(Ordering::Relaxed)
+}
+
+pub fn grid_size() -> i32 {
+    GRID_SIZE.load(Ordering::Relaxed)
+}
+
+/// Changes the grid size; ignored unless it is one of the presets.
+pub fn set_grid_size(size: i32) {
+    if grid::is_valid(size) {
+        GRID_SIZE.store(size, Ordering::Relaxed);
+    }
+}
 
 /// Shell surfaces that must never be moved (desktop, taskbars, Start, task view…).
 const SHELL_CLASSES: &[&str] = &[
@@ -180,9 +201,9 @@ pub fn grid_line(start: i32, len: i32, i: i32, n: i32) -> i32 {
 pub fn cell_at(work: &RECT, x: i32, y: i32) -> (i32, i32) {
     let w = (work.right - work.left).max(1);
     let h = (work.bottom - work.top).max(1);
-    let c = ((x - work.left) as i64 * COLS as i64).div_euclid(w as i64) as i32;
-    let r = ((y - work.top) as i64 * ROWS as i64).div_euclid(h as i64) as i32;
-    (c.clamp(0, COLS - 1), r.clamp(0, ROWS - 1))
+    let c = ((x - work.left) as i64 * cols() as i64).div_euclid(w as i64) as i32;
+    let r = ((y - work.top) as i64 * rows() as i64).div_euclid(h as i64) as i32;
+    (c.clamp(0, cols() - 1), r.clamp(0, rows() - 1))
 }
 
 /// Moves and resizes the window so that its visible frame covers cells (c0,r0)..=(c1,r1).
@@ -190,10 +211,10 @@ pub fn apply(hwnd: HWND, work: RECT, c0: i32, r0: i32, c1: i32, r1: i32) {
     let ww = work.right - work.left;
     let wh = work.bottom - work.top;
     let want = RECT {
-        left: grid_line(work.left, ww, c0, COLS),
-        top: grid_line(work.top, wh, r0, ROWS),
-        right: grid_line(work.left, ww, c1 + 1, COLS),
-        bottom: grid_line(work.top, wh, r1 + 1, ROWS),
+        left: grid_line(work.left, ww, c0, cols()),
+        top: grid_line(work.top, wh, r0, rows()),
+        right: grid_line(work.left, ww, c1 + 1, cols()),
+        bottom: grid_line(work.top, wh, r1 + 1, rows()),
     };
     tlog!(
         "apply: cells ({c0},{r0})-({c1},{r1}) -> visible rect {}",
